@@ -1,0 +1,178 @@
+[project]
+name = "document-analyzer"
+version = "0.1.0"
+description = ""
+authors = [{ name = "Kevin Meinon", email = "kevin@meinon.de" }]
+readme = "README.md"
+requires-python = ">=3.14"
+
+keywords = ["python3"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    # TODO(MVP-15): Trim to MVP dependencies; remove Chroma/sentence-transformers if LightRAG is the only retrieval backend.
+    "fastapi[standard]",
+    "uvicorn[standard]",
+    "python-multipart",
+    "jinja2",
+    "pydantic-settings",
+    # Document parsing
+    "pypdf",
+    "python-docx",
+    # AI/ML
+    "openai",
+    "anthropic",
+    "chromadb",
+    "sentence-transformers",
+    # Utilities
+    "niquests",
+    "rich",
+    "loguru",
+    "sqlmodel>=0.0.37",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "ruff",
+    "python-dotenv",
+    "ty",
+    "playwright>=1.57.0",
+]
+
+[project.urls]
+Homepage = "https://pypi.org/ai-document-analyzer/ai-document-analyzer/"
+Repository = "https://github.com/krytos/ai-document-analyzer"
+Documentation = "https://github.com/krytos/ai-document-analyzer/tree/main/docs"
+
+[project.scripts]
+ai-document-analyzer = "document_analyzer.main:main"
+creatte-dummies = "document_analyzer.services.library_service:create_dummy_library_items"
+
+[build-system]
+requires = ["uv-build"]
+build-backend = "uv_build"
+
+[tool.uv]
+link-mode = "symlink"
+compile-bytecode = true
+package = true
+
+[tool.fastapi]
+entrypoint = "src.document_analyzer.main:app"
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+show-fixes = true
+fix = true
+exclude = ["migrations"]
+target-version = "py314"
+unsafe-fixes = true
+src = ["src"]
+
+
+[tool.ruff.lint]
+extend-safe-fixes = ["E721", "E712", "F811"]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore = ["SIM116", "E501"]
+exclude = ["docs"]
+
+[tool.ruff.lint.per-file-ignores]
+# https://beta.ruff.rs/docs/rules/
+"__init__.py" = ["F401", "F403", "F405"]
+"tests/*" = ["ANN", "ARG", "INP001", "S101"]
+"logger.py" = ["N815"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+docstring-code-format = true
+docstring-code-line-length = 80
+
+[tool.ruff.analyze]
+detect-string-imports = true
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ty.src]
+exclude = ["docs", "tests/**", "**/test_*.py"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = """
+--doctest-modules \
+--cov=./ \
+--cov-append \
+--cov-report html:tests/reports/coverage-html \
+--cov-report xml:tests/reports/coverage.xml \
+--ignore=docs/
+"""
+# TODO(MVP-16): Enforce 100% coverage in CI with `--cov-fail-under=100` once baseline tests are added.
+testpaths = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: not covered", "@overload"]
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+omit = [".tox/*", "tests/*"]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py39, py310, py311, py312, py313, py314, pypy3
+skip_missing_interpreters = true
+
+[gh-actions]
+python =
+    3.9: py39
+    3.10: py310
+    3.11: py311
+    3.12: py312
+    3.13: py313
+    3.14: py314
+    pypy-3.10: pypy3
+
+[testenv]
+passenv = GITHUB_*
+allowlist_externals = uv
+
+commands =
+    uv run pytest
+    uv run coverage report
+"""

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+
+{% block title %}Dashboard | AI Document Analyzer{% endblock %}
+
+{% block content %}
+    <div class="container-fluid py-4">
+        <div class="row g-4">
+            <section class="col-12 col-xl-8">
+                <div class="card app-card h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                            <div>
+                                <h2 class="h3 mb-1 app-headline">Welcome back, Curator</h2>
+                                <p class="text-secondary mb-0">What shall we analyze today?</p>
+                            </div>
+                        </div>
+
+                        <div
+                                x-data="{ analyzing: false, completed: false, filename: '' }"
+                                @htmx:before-request.window="
+                                    if ($event.target.id === 'analyze-form') {
+                                        analyzing = true;
+                                        completed = false;
+                                    }
+                                "
+                                @htmx:after-request.window="
+                                    if ($event.target.id === 'analyze-form') {
+                                        analyzing = false;
+                                        completed = true;
+                                    }
+                                "
+                                @htmx:response-error.window="
+                                    if ($event.target.id === 'analyze-form') {
+                                        analyzing = false;
+                                        completed = false;
+                                    }
+                                "
+                        >
+                            <form
+                                    id="analyze-form"
+                                    x-ref="analyzeForm"
+                                    x-show="!analyzing && !completed"
+                                    class="upload-dropzone"
+                                    {# TODO(MVP-03): Keep placeholder UX, but post to real ingest endpoint and handle returned file_id. #}
+                                    hx-post="{{ url_for('analyze_file') }}"
+                                    hx-target="#analyze-response-sink"
+                                    hx-swap="innerHTML"
+                                    hx-encoding="multipart/form-data"
+                                    enctype="multipart/form-data"
+                            >
+                                <i class="bi bi-file-earmark-arrow-up fs-1 mb-2 d-block"></i>
+                                <p class="fw-semibold mb-1">Drop PDF or DOCX here</p>
+                                <p class="text-secondary small mb-3">Supports high-fidelity analysis up to 50MB</p>
+                                <input
+                                        class="form-control"
+                                        name="file"
+                                        type="file"
+                                        accept=".pdf,.doc,.docx"
+                                        required
+                                        @change="filename = $event.target.files.length ? $event.target.files[0].name : ''"
+                                >
+                                <button class="btn btn-outline-primary mt-3" type="submit">Analyze</button>
+                            </form>
+
+                            <div x-show="analyzing" class="upload-dropzone">
+                                <i class="bi bi-cpu fs-1 mb-2 d-block"></i>
+                                <p class="fw-semibold mb-2">Analyzing document...</p>
+                                <p class="text-secondary small mb-3">Please wait while we process your file.</p>
+                                <div class="progress app-progress" role="progressbar" aria-label="analysis progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated analyze-progress-fill"></div>
+                                </div>
+                            </div>
+
+                            <div x-show="completed" class="upload-dropzone text-center">
+                                <i class="bi bi-check-circle fs-1 mb-2 d-block text-success"></i>
+                                <p class="fw-semibold mb-1">Analysis completed</p>
+                                <p class="text-secondary small mb-3"
+                                   x-text="filename ? `${filename} is ready.` : 'Your file is ready.'"
+                                ></p>
+                                <button
+                                        class="btn btn-outline-primary"
+                                        type="button"
+                                        @click="
+                                            completed = false;
+                                            filename = '';
+                                            $refs.analyzeForm.reset();
+                                            document.getElementById('analyze-response-sink').innerHTML = '';
+                                        "
+                                >
+                                    OK
+                                </button>
+                            </div>
+
+                            <div id="analyze-response-sink" class="d-none"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="col-12 col-xl-4">
+                <div class="card app-card">
+                    <div class="card-body">
+                        <h3 class="h6 text-uppercase text-secondary mb-2">Credits Remaining</h3>
+                        <p class="h4 mb-2">2,480 <span class="text-secondary fs-6">/ 5,000</span></p>
+                        <div class="progress app-progress" role="progressbar" aria-label="credits">
+                            <div class="progress-bar" style="width: 49.6%"></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+{% endblock %}

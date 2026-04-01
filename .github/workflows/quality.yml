@@ -1,0 +1,12 @@
+name: quality
+# TODO(MVP-17): Implement full CI jobs (ruff, ty, pytest with 100% coverage gate) and upload coverage artifacts.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  name: quality
+  runs-on: ubuntu-latest
