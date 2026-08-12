@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Archive | Clarity{% endblock %}
+{% block content %}
+<div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.25em] text-indigo-400">Your library</p>
+        <h1 class="mt-2 text-3xl font-semibold text-white">Document archive</h1>
+        <p class="mt-2 text-slate-400">Reopen an analyzed document and continue asking questions.</p>
+    </div>
+    <a href="{{ url_for('dashboard') }}" class="rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400">Analyze new document</a>
+</div>
+<div class="mb-5">
+    <label class="sr-only" for="archive-search">Search documents</label>
+    <input id="archive-search" name="q" type="search" placeholder="Search by filename..."
+           hx-get="{{ url_for('archive_list') }}" hx-trigger="keyup changed delay:300ms" hx-target="#archive-list" hx-swap="innerHTML"
+           class="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-indigo-500">
+</div>
+<div id="archive-list">{% include "partials/archive_list.html" %}</div>
+{% endblock %}

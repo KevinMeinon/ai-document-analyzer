@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     max_upload_size_bytes: int = 50 * 1024 * 1024
     libreoffice_command: str = "soffice"
     conversion_timeout_seconds: int = 60
+    ocr_enabled: bool = True
+    ocr_dpi: int = 200
+    ocr_timeout_seconds: int = 120
     log_level: str = "INFO"
     log_file: Path = Path(".data/logs/app.log")
     log_rotation: str = "10 MB"

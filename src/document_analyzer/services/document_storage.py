@@ -20,13 +20,15 @@ def store_uploaded_file(
     safe_name = Path(filename).name
     suffix = Path(safe_name).suffix.lower()
     if not safe_name or suffix not in SUPPORTED_EXTENSIONS:
-        logger.warning("upload_validation_failed reason=unsupported_extension filename={}", safe_name or "[missing]")
+        logger.warning("Rejected upload {} because its extension is unsupported", safe_name or "[missing]")
         raise ValueError("Only PDF, DOCX, DOC, TXT, and MD files are supported")
     if not content:
-        logger.warning("upload_validation_failed reason=empty_file filename={}", safe_name)
+        logger.warning("Rejected upload {} because it is empty", safe_name)
         raise ValueError("Uploaded document is empty")
     if len(content) > settings.max_upload_size_bytes:
-        logger.warning("upload_validation_failed reason=size_limit filename={} byte_count={}", safe_name, len(content))
+        logger.warning(
+            "Rejected upload {} because it contains {} bytes and exceeds the size limit", safe_name, len(content)
+        )
         raise ValueError(f"Document exceeds the {settings.max_upload_size_bytes // (1024 * 1024)} MB limit")
 
     identifier = document_id or uuid4()
@@ -34,5 +36,5 @@ def store_uploaded_file(
     target_directory.mkdir(parents=True, exist_ok=True)
     target = target_directory / safe_name
     target.write_bytes(content)
-    logger.debug("upload_file_persisted document_id={} path={}", identifier, target)
+    logger.debug("Persisted upload {} at {}", identifier, target)
     return identifier, target

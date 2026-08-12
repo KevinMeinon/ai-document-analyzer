@@ -2,7 +2,7 @@ from pathlib import Path
 
 from docx import Document
 
-from document_analyzer.core.document_reader import read_document
+from document_analyzer.core.document_reader import document_from_extracted_pages, read_document
 
 
 def test_read_text_and_markdown_documents(tmp_path: Path) -> None:
@@ -28,3 +28,18 @@ def test_read_docx_paragraphs_and_tables(tmp_path: Path) -> None:
 
     assert "A paragraph" in document.content
     assert "left | right" in document.content
+
+
+def test_document_from_extracted_pages_preserves_order_and_metadata(tmp_path: Path) -> None:
+    document = document_from_extracted_pages(
+        tmp_path / "retained.pdf",
+        "original.pdf",
+        "pdf",
+        ["first page", "second page"],
+        {"document_id": "document-123", "extraction_method": "ocr"},
+    )
+
+    assert [page.number for page in document.pages] == [1, 2]
+    assert document.content == "first page\n\nsecond page"
+    assert document.document_id == "document-123"
+    assert document.metadata["extraction_method"] == "ocr"

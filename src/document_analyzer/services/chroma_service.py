@@ -27,7 +27,7 @@ class ChromaDocumentStore:
         self.settings = settings
         if collection is not None:
             self.collection = collection
-            logger.debug("chroma_store_initialized injected_collection=true")
+            logger.debug("Initialized Chroma store with an injected collection")
             return
 
         import chromadb
@@ -44,11 +44,11 @@ class ChromaDocumentStore:
             name=settings.chroma_collection,
             embedding_function=cast(Any, embedding_function),
         )
-        logger.info("chroma_store_initialized path={} collection={}", settings.chroma_path, settings.chroma_collection)
+        logger.info("Initialized Chroma collection {} at {}", settings.chroma_collection, settings.chroma_path)
 
     def ingest(self, document: PdfDocument) -> int:
         document_id = str(document.metadata.get("document_id", document.document_id))
-        logger.debug("chroma_ingest_started document_id={} filename={}", document_id, document.filename)
+        logger.debug("Started indexing {} ({})", document.filename, document_id)
         chunks: list[tuple[str, int, str]] = []
         for page in document.pages:
             text = page.text.strip()
@@ -72,13 +72,15 @@ class ChromaDocumentStore:
                     "document_id": document_id,
                     "filename": document.filename,
                     "file_type": document.file_type,
+                    "extraction_method": document.metadata.get("extraction_method", "text"),
+                    "ocr_page_count": int(document.metadata.get("ocr_page_count", "0")),
                     "page_number": chunk[1],
                     "source_path": str(document.path),
                 }
                 for chunk in chunks
             ],
         )
-        logger.info("chroma_ingest_completed document_id={} chunk_count={}", document_id, len(chunks))
+        logger.info("Indexed {} chunks for {}", len(chunks), document.filename)
         return len(chunks)
 
     def search(self, query: str, limit: int | None = None) -> list[RetrievedChunk]:
@@ -104,7 +106,7 @@ class ChromaDocumentStore:
             )
             for index, (text, metadata) in enumerate(zip(documents, metadatas, strict=False))
         ]
-        logger.debug("chroma_search_completed result_count={}", len(chunks))
+        logger.debug("Chroma search returned {} chunks", len(chunks))
         return chunks
 
     def count(self) -> int:

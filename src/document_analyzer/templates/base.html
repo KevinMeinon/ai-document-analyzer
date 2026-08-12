@@ -9,7 +9,7 @@
 </head>
 <body class="min-h-full bg-slate-950 text-slate-100 antialiased">
 <header class="border-b border-slate-800 bg-slate-950/90">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+    <nav class="mx-auto flex max-w-[1700px] items-center justify-between px-6 py-4">
         <a href="{{ url_for('dashboard') }}" class="text-lg font-semibold tracking-tight text-white">Clarity</a>
         <a href="{{ url_for('archive') }}"
            class="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white">
@@ -17,7 +17,7 @@
         </a>
     </nav>
 </header>
-<main class="mx-auto min-h-[calc(100vh-73px)] max-w-7xl px-6 py-8">
+<main class="mx-auto min-h-[calc(100vh-73px)] max-w-[1700px] px-6 py-8 xl:flex xl:h-[calc(100vh-73px)] xl:flex-col xl:overflow-hidden">
     {% block content %}{% endblock %}
 </main>
 {% block scripts %}{% endblock %}

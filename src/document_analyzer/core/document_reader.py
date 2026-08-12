@@ -19,24 +19,47 @@ def read_document(path: str | Path, settings: Settings | None = None) -> PdfDocu
 
     document_path = Path(path)
     suffix = document_path.suffix.lower()
-    logger.debug("document_reader_selected path={} extension={}", document_path, suffix or "[none]")
+    logger.debug("Selected a reader for {} ({})", document_path, suffix or "[no extension]")
     if suffix not in SUPPORTED_EXTENSIONS:
         raise PdfReadError(f"Unsupported document type: {suffix or '[none]'}")
     if suffix == ".pdf":
-        document = read_pdf(document_path)
-        logger.debug("document_reader_completed path={} reader=pdf page_count={}", document_path, len(document.pages))
+        document = read_pdf(document_path, settings)
+        logger.debug("PDF reader extracted {} pages from {}", len(document.pages), document_path)
         return document
     if suffix == ".docx":
         document = _read_docx(document_path, "docx")
-        logger.debug("document_reader_completed path={} reader=docx page_count={}", document_path, len(document.pages))
+        logger.debug("DOCX reader extracted {} sections from {}", len(document.pages), document_path)
         return document
     if suffix == ".doc":
         document = _read_doc(document_path, settings or get_settings())
-        logger.debug("document_reader_completed path={} reader=doc page_count={}", document_path, len(document.pages))
+        logger.debug("DOC reader extracted {} sections from {}", len(document.pages), document_path)
         return document
     document = _read_text(document_path, suffix[1:])
-    logger.debug("document_reader_completed path={} reader=text page_count={}", document_path, len(document.pages))
+    logger.debug("Text reader extracted {} sections from {}", len(document.pages), document_path)
     return document
+
+
+def document_from_extracted_pages(
+    path: str | Path,
+    filename: str,
+    file_type: str,
+    pages: list[str],
+    metadata: dict[str, str] | None = None,
+) -> PdfDocument:
+    """Reconstruct a document from extraction persisted during upload.
+
+    This deliberately does not touch the original file, so page refreshes and
+    chat requests never repeat PDF parsing or OCR.
+    """
+    if not pages or not any(page.strip() for page in pages):
+        raise PdfReadError(f"Document has no persisted extractable text: {filename}")
+    return PdfDocument(
+        path=Path(path),
+        filename=filename,
+        metadata=dict(metadata or {}),
+        pages=tuple(PdfPage(number=index, text=text) for index, text in enumerate(pages, start=1)),
+        file_type=file_type,
+    )
 
 
 def _read_docx(path: Path, file_type: str) -> PdfDocument:
@@ -54,7 +77,7 @@ def _read_docx(path: Path, file_type: str) -> PdfDocument:
 
 
 def _read_doc(path: Path, settings: Settings) -> PdfDocument:
-    logger.info("doc_conversion_started filename={} command={}", path.name, settings.libreoffice_command)
+    logger.info("Started DOC conversion for {} using {}", path.name, settings.libreoffice_command)
     executable = shutil.which(settings.libreoffice_command)
     if executable is None:
         raise PdfReadError(f"Cannot read {path.name}: {settings.libreoffice_command!r} is required for .doc files")
@@ -75,7 +98,7 @@ def _read_doc(path: Path, settings: Settings) -> PdfDocument:
             raise
         except Exception as exc:
             raise PdfReadError(f"Unable to convert DOC {path}: {exc}") from exc
-    logger.info("doc_conversion_completed filename={} page_count={}", path.name, len(converted_document.pages))
+    logger.info("Converted {} into {} sections", path.name, len(converted_document.pages))
     return PdfDocument(
         path=path,
         filename=path.name,

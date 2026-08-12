@@ -25,6 +25,8 @@ dependencies = [
     "pydantic-settings",
     # Document parsing
     "pdfreader",
+    "pypdfium2",
+    "rapidocr-onnxruntime",
     "python-docx",
     # AI/ML
     "openai",

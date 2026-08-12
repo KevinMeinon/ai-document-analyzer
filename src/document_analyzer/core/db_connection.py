@@ -29,6 +29,8 @@ def create_db_and_tables() -> None:
             "storage_path": "TEXT",
             "page_count": "INTEGER NOT NULL DEFAULT 0",
             "summary": "TEXT",
+            "extracted_pages": "TEXT NOT NULL DEFAULT '[]'",
+            "extraction_metadata": "TEXT NOT NULL DEFAULT '{}'",
         }
         for column, definition in migrations.items():
             if column not in existing_columns:

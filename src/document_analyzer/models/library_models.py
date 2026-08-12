@@ -88,6 +88,8 @@ class LibraryItem(SQLModel, table=True):
     storage_path: str | None = Field(default=None)
     page_count: int = Field(default=0, ge=0)
     summary: str | None = Field(default=None)
+    extracted_pages: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
+    extraction_metadata: dict[str, str] = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
     # TODO(MVP-18): Add LightRAG document reference (e.g., lightrag_doc_id) to link metadata to retrieval memory.
     # TODO(MVP-19): Store preview/snippet fields if the original file is not persisted.
 

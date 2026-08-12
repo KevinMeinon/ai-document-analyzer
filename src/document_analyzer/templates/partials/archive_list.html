@@ -1,0 +1,19 @@
+{% if documents %}
+<div class="grid gap-4 md:grid-cols-2">
+    {% for document in documents %}
+    <a href="{{ url_for('document_analysis', document_id=document.id) }}" class="group rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:-translate-y-0.5 hover:border-indigo-500">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="font-medium text-white group-hover:text-indigo-300">{{ document.filename }}</p>
+                <p class="mt-1 text-xs uppercase tracking-wider text-slate-500">{{ document.filetype.value }} · {{ document.size_label }}</p>
+            </div>
+            <span class="text-slate-600 group-hover:text-indigo-400">→</span>
+        </div>
+        <p class="mt-4 line-clamp-3 text-sm leading-6 text-slate-400">{{ document.summary }}</p>
+        <p class="mt-4 text-xs text-slate-600">Analyzed {{ document.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="rounded-2xl border border-dashed border-slate-800 px-6 py-16 text-center text-slate-500">No analyzed documents yet.</div>
+{% endif %}

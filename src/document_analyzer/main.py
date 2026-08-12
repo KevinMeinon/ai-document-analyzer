@@ -29,11 +29,11 @@ configure_logging(settings)
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Initialize application persistence before serving requests."""
-    logger.info("application_startup_begin")
+    logger.info("Application startup began")
     create_db_and_tables()
-    logger.info("application_startup_complete")
+    logger.info("Application startup completed")
     yield
-    logger.info("application_shutdown")
+    logger.info("Application shutdown")
 
 
 app = FastAPI(lifespan=lifespan)
@@ -57,7 +57,7 @@ async def request_logging_middleware(request: Request, call_next):
     started = time.perf_counter()
     with logger.contextualize(request_id=request_id):
         logger.info(
-            "request_started method={} path={} content_type={} content_length={} htmx={}",
+            "Started {} {} — content type: {}, content length: {}, HTMX: {}",
             request.method,
             request.url.path,
             request.headers.get("content-type", "-"),
@@ -67,12 +67,12 @@ async def request_logging_middleware(request: Request, call_next):
         try:
             response = await call_next(request)
         except Exception:
-            logger.exception("request_failed method={} path={}", request.method, request.url.path)
+            logger.exception("Request failed: {} {}", request.method, request.url.path)
             raise
         elapsed_ms = (time.perf_counter() - started) * 1000
         response.headers["X-Request-ID"] = request_id
         logger.info(
-            "request_completed method={} path={} status={} elapsed_ms={:.2f}",
+            "Completed {} {} with status {} in {:.2f} ms",
             request.method,
             request.url.path,
             response.status_code,
@@ -94,7 +94,7 @@ async def request_validation_error(request: Request, exc: RequestValidationError
         for error in exc.errors()
     ]
     logger.warning(
-        "request_validation_failed path={} content_type={} errors={}",
+        "Request validation failed for {} with content type {}: {}",
         request.url.path,
         request.headers.get("content-type", "-"),
         errors,

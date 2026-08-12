@@ -21,7 +21,7 @@ Upload documents, get intelligent summaries, and chat with your files using natu
 | **AI/LLM** | Pydantic AI with OpenAI |
 | **Embeddings** | OpenAI `text-embedding-3-small` |
 | **Vector Store** | ChromaDB |
-| **Document Parsing** | pdfreader, python-docx, LibreOffice |
+| **Document Parsing** | pdfreader, pypdfium2, RapidOCR, python-docx, LibreOffice |
 | **DevOps** | Docker, GitHub Actions |
 
 ## Quick Start
@@ -95,7 +95,8 @@ Chroma data is persisted under `.data/chroma` by default.
 The web interface at `/` accepts PDF, DOCX, DOC, TXT, and Markdown files. Uploads
 are retained under `.data/uploads`, indexed in ChromaDB, summarized synchronously,
 and opened in the HTMX analysis workspace. Legacy `.doc` files require the
-headless `soffice` executable.
+headless `soffice` executable. Image-only PDF files are rendered and OCR'd with
+the Python dependencies installed by `uv`; no separate OCR runtime is required.
 
 ## Project Structure
 

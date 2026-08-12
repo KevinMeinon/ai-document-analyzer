@@ -79,7 +79,7 @@ async def analyze_document(
     """Run summary or question analysis against a retained PDF."""
 
     logger.debug(
-        "llm_analysis_started document_id={} prompt_length={} model={}",
+        "Started LLM analysis for {} with a {} character prompt using {}",
         document.document_id,
         len(prompt),
         settings.llm_model,
@@ -91,7 +91,7 @@ async def analyze_document(
     )
     result = await build_agent(settings).run(prompt, deps=context)
     logger.info(
-        "llm_analysis_completed document_id={} retrieved_count={} source_count={}",
+        "Completed LLM analysis for {} after retrieving {} chunks and {} sources",
         document.document_id,
         len(context.retrieved_chunks),
         len(result.output.sources),
