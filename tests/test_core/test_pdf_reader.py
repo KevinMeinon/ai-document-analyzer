@@ -46,8 +46,8 @@ def test_ocr_page_renders_and_extracts_text(monkeypatch: pytest.MonkeyPatch, tmp
 
     monkeypatch.setitem(sys.modules, "pypdfium2", ModuleType("pypdfium2"))
     monkeypatch.setitem(sys.modules, "rapidocr_onnxruntime", ModuleType("rapidocr_onnxruntime"))
-    sys.modules["pypdfium2"].PdfDocument = FakePdf  # type: ignore[attr-defined]
-    sys.modules["rapidocr_onnxruntime"].RapidOCR = FakeRapidOCR  # type: ignore[attr-defined]
+    sys.modules["pypdfium2"].PdfDocument = FakePdf
+    sys.modules["rapidocr_onnxruntime"].RapidOCR = FakeRapidOCR
 
     assert pdf_reader._ocr_page(source, 1, Settings()) == "Recognized text"
 

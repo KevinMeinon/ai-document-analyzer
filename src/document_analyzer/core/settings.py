@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     llm_model: str = "openai:gpt-5-nano"
     chroma_path: Path = Path(".data/chroma")
     chroma_collection: str = "pdf_documents"
+    database_path: Path = Path("db.sqlite3")
     sample_pdf_path: Path = Path("src/document_analyzer/core/sample.pdf")
     upload_dir: Path = Path(".data/uploads")
     max_upload_size_bytes: int = 50 * 1024 * 1024

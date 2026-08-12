@@ -19,7 +19,7 @@ class FakeCollection:
         rows = list(self.rows.values())
         where = kwargs.get("where")
         if where:
-            excluded = str(where["document_id"]["$ne"])  # type: ignore[index]
+            excluded = str(where["document_id"]["$ne"])
             rows = [row for row in rows if row[1]["document_id"] != excluded]
         rows = rows[: int(kwargs["n_results"])]
         return {
@@ -35,7 +35,7 @@ class FakeCollection:
 def test_ingest_is_idempotent_and_search_preserves_page_metadata(tmp_path: Path) -> None:
     settings = Settings(chunk_size=5, chunk_overlap=1)
     collection = FakeCollection()
-    store = ChromaDocumentStore(settings, collection=collection)  # type: ignore[arg-type]
+    store = ChromaDocumentStore(settings, collection=collection)
     document = PdfDocument(
         path=tmp_path / "sample.pdf",
         filename="sample.pdf",
@@ -55,7 +55,7 @@ def test_ingest_is_idempotent_and_search_preserves_page_metadata(tmp_path: Path)
 def test_search_can_exclude_the_active_document(tmp_path: Path) -> None:
     settings = Settings(chunk_size=20, chunk_overlap=1)
     collection = FakeCollection()
-    store = ChromaDocumentStore(settings, collection=collection)  # type: ignore[arg-type]
+    store = ChromaDocumentStore(settings, collection=collection)
     current = PdfDocument(
         path=tmp_path / "current.pdf",
         filename="current.pdf",

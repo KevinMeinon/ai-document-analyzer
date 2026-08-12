@@ -35,18 +35,13 @@ Upload documents, get intelligent summaries, and chat with your files using natu
 ### Installation
 
 ```bash
-# Clone repository
 git clone https://github.com/yourusername/ai-document-analyzer.git
 cd ai-document-analyzer
 
-# Install dependencies
 uv sync
 
-# Configure environment
 cp .env.example .env
-# Edit .env with your API keys
 
-# Run development server
 uv run uvicorn document_analyzer.main:app --reload
 ```
 
@@ -64,24 +59,32 @@ Open [http://localhost:8000](http://localhost:8000) in your browser.
 ### Docker
 
 ```bash
-docker-compose up -d
+docker compose up -d --build
 ```
+
+The application is available at [http://localhost:8000](http://localhost:8000).
+SQLite, ChromaDB, uploaded originals, and logs are persisted in the named
+`document_data` volume. To run the live-reloading development service instead:
+
+```bash
+docker compose --profile dev up --build development
+```
+
+The development service is available at [http://localhost:8001](http://localhost:8001)
+and mounts `src/` into the container.
 
 ## Usage
 
 ### Analyze the sample document
 
 The current backend intentionally uses `src/document_analyzer/core/sample.pdf`.
-The PDF remains on disk and is re-read whenever analysis is requested.
+Uploaded originals and their extracted text are retained for later analysis.
 
 ```bash
-# Index or refresh the sample PDF in persistent ChromaDB
 curl -X POST "http://localhost:8000/api/documents/sample/ingest"
 
-# Generate a summary
 curl -X POST "http://localhost:8000/api/documents/sample/summary"
 
-# Ask a question
 curl -X POST "http://localhost:8000/api/documents/sample/question" \
   -H "Content-Type: application/json" \
   -d '{"question": "What are the main findings?"}'
@@ -93,22 +96,23 @@ Chroma data is persisted under `.data/chroma` by default.
 ### Web upload workspace
 
 The web interface at `/` accepts PDF, DOCX, DOC, TXT, and Markdown files. Uploads
-are retained under `.data/uploads`, indexed in ChromaDB, summarized synchronously,
-and opened in the HTMX analysis workspace. Legacy `.doc` files require the
-headless `soffice` executable. Image-only PDF files are rendered and OCR'd with
-the Python dependencies installed by `uv`; no separate OCR runtime is required.
+are retained, indexed in ChromaDB, and opened in the HTMX analysis workspace.
+Summaries are generated lazily from the chat suggestions. Legacy `.doc` files
+require the bundled headless LibreOffice runtime. Image-only PDF files are
+rendered and OCR'd with the Python dependencies installed by `uv`; no separate
+OCR runtime is required.
 
 ## Project Structure
 
 ```
 src/document_analyzer/
-├── main.py              # FastAPI application
-├── config.py            # Settings management
-├── api/routes/          # HTTP endpoints
-├── core/                # Document parsing, embeddings, LLM
-├── services/            # Business logic
-├── models/              # Pydantic schemas
-└── templates/           # HTMX frontend
+├── main.py
+├── config.py
+├── api/routes/
+├── core/
+├── services/
+├── models/
+└── templates/
 ```
 
 ## Architecture
@@ -122,16 +126,12 @@ Query → Embed Question → Semantic Search → LLM + Context → Response
 ## Development
 
 ```bash
-# Run tests
 uv run pytest
 
-# Type checking
 uv run ty
 
-# Linting
 uv run ruff check src/
 
-# Format code
 uv run ruff format src/
 ```
 
