@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+.env
+.data/
+db.sqlite3
+.coverage
+tests/reports/

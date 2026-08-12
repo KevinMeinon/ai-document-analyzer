@@ -19,8 +19,9 @@ class FileType(StrEnum):
 
     PDF = "pdf"
     DOCX = "docx"
+    DOC = "doc"
     TXT = "txt"
-    XLSX = "xlsx"
+    MD = "md"
     UNKNOWN = "unknown"
 
 
@@ -84,6 +85,9 @@ class LibraryItem(SQLModel, table=True):
     status: ProcessingStatus = Field(default=ProcessingStatus.UPLOADED, index=True)
     tags: list[str] = Field(default_factory=list, sa_column=Column(JSON, nullable=False))
     error_message: str | None = Field(default=None)
+    storage_path: str | None = Field(default=None)
+    page_count: int = Field(default=0, ge=0)
+    summary: str | None = Field(default=None)
     # TODO(MVP-18): Add LightRAG document reference (e.g., lightrag_doc_id) to link metadata to retrieval memory.
     # TODO(MVP-19): Store preview/snippet fields if the original file is not persisted.
 
@@ -97,7 +101,7 @@ class LibraryItem(SQLModel, table=True):
         return build_size_label(self.size_bytes)
 
     @classmethod
-    def from_create(cls, payload: LibraryItemCreate) -> "LibraryItem":
+    def from_create(cls, payload: LibraryItemCreate) -> LibraryItem:
         """Build a persisted model from a creation payload.
 
         Args:
@@ -107,11 +111,11 @@ class LibraryItem(SQLModel, table=True):
             LibraryItem: Initialized persistence model instance.
         """
         return cls(
-                filename=payload.filename,
-                filetype=infer_filetype(payload.filename),
-                size_bytes=payload.size_bytes,
-                status=payload.status,
-                tags=payload.normalized_tags(),
+            filename=payload.filename,
+            filetype=infer_filetype(payload.filename),
+            size_bytes=payload.size_bytes,
+            status=payload.status,
+            tags=payload.normalized_tags(),
         )
 
 
@@ -130,10 +134,12 @@ def infer_filetype(filename: str) -> FileType:
             return FileType.PDF
         case ".docx":
             return FileType.DOCX
+        case ".doc":
+            return FileType.DOC
         case ".txt":
             return FileType.TXT
-        case ".xlsx":
-            return FileType.XLSX
+        case ".md":
+            return FileType.MD
         case _:
             return FileType.UNKNOWN
 
@@ -158,8 +164,8 @@ def build_size_label(size_bytes: int) -> str:
             return f"{n} B"
         case n if (kb := n / 1024) < 1024:
             return f"{kb:.1f} KB"
-        case n if (mb := n / (1024 ** 2)) < 1024:
+        case n if (mb := n / (1024**2)) < 1024:
             return f"{mb:.1f} MB"
         case n:
-            gb = n / (1024 ** 3)
+            gb = n / (1024**3)
             return f"{gb:.1f} GB"

@@ -11,11 +11,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
@@ -23,25 +18,23 @@ classifiers = [
 ]
 
 dependencies = [
-    # TODO(MVP-15): Trim to MVP dependencies; remove Chroma/sentence-transformers if LightRAG is the only retrieval backend.
     "fastapi[standard]",
     "uvicorn[standard]",
     "python-multipart",
     "jinja2",
     "pydantic-settings",
     # Document parsing
-    "pypdf",
+    "pdfreader",
     "python-docx",
     # AI/ML
     "openai",
-    "anthropic",
     "chromadb",
-    "sentence-transformers",
     # Utilities
     "niquests",
     "rich",
     "loguru",
     "sqlmodel>=0.0.37",
+    "pydantic-ai",
 ]
 
 [dependency-groups]
@@ -65,16 +58,16 @@ ai-document-analyzer = "document_analyzer.main:main"
 creatte-dummies = "document_analyzer.services.library_service:create_dummy_library_items"
 
 [build-system]
-requires = ["uv-build"]
+requires = ["uv-build>=0.12.3"]
 build-backend = "uv_build"
 
 [tool.uv]
-link-mode = "symlink"
+link-mode = "hardlink"
 compile-bytecode = true
 package = true
 
 [tool.fastapi]
-entrypoint = "src.document_analyzer.main:app"
+entrypoint = "document_analyzer.main:app"
 
 [tool.ruff]
 line-length = 120
@@ -153,26 +146,43 @@ relative_files = true
 omit = [".tox/*", "tests/*"]
 
 [tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py39, py310, py311, py312, py313, py314, pypy3
-skip_missing_interpreters = true
+requires = ["tox>=4.22", "tox-uv>=1.16"]
+env_list = ["py313", "lint", "type"]
 
-[gh-actions]
-python =
-    3.9: py39
-    3.10: py310
-    3.11: py311
-    3.12: py312
-    3.13: py313
-    3.14: py314
-    pypy-3.10: pypy3
+[tool.tox.env_run_base]
+description = "Run test suite"
+runner = "uv-venv-lock-runner"
+dependency_groups = ["dev"]
+package = "wheel"
+pass_env = [
+    "GITHUB_*",
+    "CI",
+    "POE_OPULENCE_*",
+]
+commands = [
+    ["pytest"],
+    ["coverage", "report"],
+]
 
-[testenv]
-passenv = GITHUB_*
-allowlist_externals = uv
+[tool.tox.env.py313]
+description = "Run tests on Python 3.14"
+base_python = ["python3.14"]
 
-commands =
-    uv run pytest
-    uv run coverage report
-"""
+[tool.tox.env.lint]
+description = "Run Ruff linting and formatting checks"
+runner = "uv-venv-lock-runner"
+dependency_groups = ["dev"]
+package = "skip"
+commands = [
+    ["ruff", "check", "src", "tests"],
+    ["ruff", "format", "--check", "src", "tests"],
+]
+
+[tool.tox.env.type]
+description = "Run ty type checking"
+runner = "uv-venv-lock-runner"
+dependency_groups = ["dev"]
+package = "skip"
+commands = [
+    ["ty", "check"],
+]

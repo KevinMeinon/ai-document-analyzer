@@ -4,6 +4,7 @@ from collections.abc import Generator
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy import inspect, text
 from sqlmodel import Session, SQLModel, create_engine
 
 # TODO(MVP-11): Move DB URL and engine settings into a typed settings module (pydantic-settings).
@@ -22,9 +23,19 @@ def create_db_and_tables() -> None:
         Creates tables in the configured SQLite database.
     """
     SQLModel.metadata.create_all(engine)
+    with engine.begin() as connection:
+        existing_columns = {column["name"] for column in inspect(engine).get_columns("libraryitem")}
+        migrations = {
+            "storage_path": "TEXT",
+            "page_count": "INTEGER NOT NULL DEFAULT 0",
+            "summary": "TEXT",
+        }
+        for column, definition in migrations.items():
+            if column not in existing_columns:
+                connection.execute(text(f"ALTER TABLE libraryitem ADD COLUMN {column} {definition}"))
 
 
-def get_session() -> Generator[Session, None, None]:
+def get_session() -> Generator[Session]:
     """Yield a database session.
 
     Yields:

@@ -1,6 +1,10 @@
 """Services for library item seeding, querying, and summary shaping."""
 
 from collections.abc import Sequence
+from typing import Any, cast
+
+from sqlalchemy import delete
+from sqlmodel import Session, select
 
 from document_analyzer.models.library_models import (
     LibraryItem,
@@ -8,8 +12,6 @@ from document_analyzer.models.library_models import (
     ProcessingStatus,
     build_size_label,
 )
-from sqlalchemy import delete
-from sqlmodel import Session, select
 
 
 def create_dummy_library_items() -> list[LibraryItem]:
@@ -63,8 +65,8 @@ def create_dummy_library_items() -> list[LibraryItem]:
 
         payload = LibraryItemCreate(
                 filename=str(raw["filename"]),
-                size_bytes=int(raw["size_bytes"]),
-                tags=[str(tag) for tag in list(raw["tags"])],
+                size_bytes=int(cast(int, raw["size_bytes"])),
+                tags=[str(tag) for tag in cast(list[str], raw["tags"])],
                 status=status,
         )
         items.append(LibraryItem.from_create(payload))
@@ -113,7 +115,7 @@ def list_uploaded_files(session: Session, query: str = "", status: str = "all") 
     Returns:
         list[dict]: Filtered file records for rendering.
     """
-    items = session.exec(select(LibraryItem).order_by(LibraryItem.uploaded_at.desc())).all()
+    items = session.exec(select(LibraryItem).order_by(cast(Any, LibraryItem.uploaded_at).desc())).all()
     normalized_status = status.strip().lower()
 
     if normalized_status != "all":
