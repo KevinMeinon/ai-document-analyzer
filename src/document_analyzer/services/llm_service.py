@@ -41,7 +41,11 @@ def build_agent(settings: Settings) -> Agent[AnalysisContext, PdfAnalysisResult]
         output_type=PdfAnalysisResult,
         system_prompt=(
             "You analyze PDF documents. Use only the extracted document context supplied here "
-            "and retrieved prior-document context. Never claim to have opened or uploaded a PDF. "
+            "and retrieved prior-document context. Prior-document context never includes the current document. "
+            "When asked about similar documents, compare only the explicitly listed prior documents; "
+            "if none are listed, say that no comparable prior document was found. Never treat the current "
+            "document as a prior or similar document merely because it matches the question. "
+            "Never claim to have opened or uploaded a PDF. "
             "If the evidence is insufficient, say so clearly. Keep answers concise."
         ),
     )
@@ -65,7 +69,7 @@ def build_agent(settings: Settings) -> Agent[AnalysisContext, PdfAnalysisResult]
 
         if ctx.deps.store is None:
             return []
-        return ctx.deps.store.search(query)
+        return ctx.deps.store.search(query, exclude_document_id=ctx.deps.document.document_id)
 
     return cast("Agent[AnalysisContext, PdfAnalysisResult]", agent)
 
@@ -86,7 +90,7 @@ async def analyze_document(
     )
     context = AnalysisContext(
         document=document,
-        retrieved_chunks=store.search(prompt),
+        retrieved_chunks=store.search(prompt, exclude_document_id=document.document_id),
         store=store,
     )
     result = await build_agent(settings).run(prompt, deps=context)

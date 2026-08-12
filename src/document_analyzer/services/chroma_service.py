@@ -83,14 +83,25 @@ class ChromaDocumentStore:
         logger.info("Indexed {} chunks for {}", len(chunks), document.filename)
         return len(chunks)
 
-    def search(self, query: str, limit: int | None = None) -> list[RetrievedChunk]:
+    def search(
+        self,
+        query: str,
+        limit: int | None = None,
+        exclude_document_id: str | None = None,
+    ) -> list[RetrievedChunk]:
+        """Search indexed chunks, optionally excluding the active document."""
         logger.debug(
-            "chroma_search_started query_length={} limit={}", len(query), limit or self.settings.retrieval_limit
+            "Chroma search started: query length {}, limit {}, excluding {}",
+            len(query),
+            limit or self.settings.retrieval_limit,
+            exclude_document_id or "no document",
         )
+        where = {"document_id": {"$ne": exclude_document_id}} if exclude_document_id else None
         result = self.collection.query(
             query_texts=[query],
             n_results=limit or self.settings.retrieval_limit,
             include=["documents", "metadatas", "distances"],
+            where=where,
         )
         result_data = cast(dict[str, Any], result)
         documents = (result_data.get("documents") or [[]])[0]

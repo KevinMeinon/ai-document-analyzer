@@ -9,7 +9,11 @@
             </div>
             <span class="text-slate-600 group-hover:text-indigo-400">→</span>
         </div>
-        <p class="mt-4 line-clamp-3 text-sm leading-6 text-slate-400">{{ document.summary }}</p>
+        {% if document.summary %}
+            <p class="mt-4 line-clamp-3 text-sm leading-6 text-slate-400">{{ document.summary }}</p>
+        {% else %}
+            <p class="mt-4 text-sm italic leading-6 text-slate-600">Summary available from the document chat.</p>
+        {% endif %}
         <p class="mt-4 text-xs text-slate-600">Analyzed {{ document.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</p>
     </a>
     {% endfor %}

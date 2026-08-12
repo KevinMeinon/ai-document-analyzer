@@ -77,13 +77,6 @@ async def upload_document(
         store = ChromaDocumentStore(settings)
         chunk_count = store.ingest(document)
         logger.info("Indexed {} chunks for {}", chunk_count, document_id)
-        logger.info("Started summary generation for {} using {}", document_id, settings.llm_model)
-        result = await analyze_document(
-            document, "Summarize this document and identify its key points.", store, settings
-        )
-        logger.info("Generated summary for {} using {} sources", document_id, len(result.sources))
-
-        item.summary = result.answer
         item.status = ProcessingStatus.COMPLETED
         session.add(item)
         session.commit()
@@ -127,6 +120,7 @@ async def document_chat(
     document_id: UUID,
     session: SessionDep,
     prompt: Annotated[str, Form(...)],
+    intent: Annotated[str, Form()] = "chat",
 ) -> HTMLResponse:
     item = _get_item(session, document_id)
     if not item.storage_path:
@@ -134,8 +128,20 @@ async def document_chat(
     settings = get_settings()
     logger.info("Chat started for {} with a {} character prompt", document_id, len(prompt))
     try:
+        if intent == "summary" and item.summary:
+            logger.info("Returning cached summary for {}", document_id)
+            return _template(
+                request,
+                "partials/chat_message.html",
+                {"answer": item.summary, "sources": [], "is_error": False},
+            )
         document = _document_for_item(item, session)
         result = await analyze_document(document, prompt, ChromaDocumentStore(settings), settings)
+        if intent == "summary":
+            item.summary = result.answer
+            session.add(item)
+            session.commit()
+            logger.info("Cached generated summary for {}", document_id)
     except Exception as exc:
         logger.exception("Chat failed for {} with {}", document_id, type(exc).__name__)
         return _template(request, "partials/chat_message.html", {"error": str(exc), "is_error": True}, status_code=503)

@@ -32,15 +32,107 @@
             <h2 class="font-medium text-white">Assistant</h2>
             <p class="mt-1 text-xs text-slate-500">Answers grounded in your document library</p>
         </div>
-        <div id="chat-history" class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
-            <div class="rounded-xl bg-indigo-500/10 p-4 text-sm leading-6 text-slate-300">{{ document.summary }}</div>
+        <div id="chat-history" class="min-h-0 flex-1 space-y-4 overflow-y-auto p-5" aria-live="polite">
+            <div id="chat-suggestions" class="space-y-3">
+                <p class="text-sm text-slate-400">What would you like to know?</p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" data-prompt="Summarize this document and identify its key points." data-intent="summary"
+                            class="rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-2 text-left text-xs text-indigo-200 transition hover:border-indigo-400 hover:bg-indigo-500/20">
+                        Summarize this document
+                    </button>
+                    <button type="button" data-prompt="What are the key points of this document?"
+                            class="rounded-full border border-slate-700 bg-slate-800 px-3 py-2 text-left text-xs text-slate-300 transition hover:border-slate-500 hover:text-white">
+                        Show key points
+                    </button>
+                    <button type="button" data-prompt="What important figures, amounts, dates, or limits are mentioned in this document?"
+                            class="rounded-full border border-slate-700 bg-slate-800 px-3 py-2 text-left text-xs text-slate-300 transition hover:border-slate-500 hover:text-white">
+                        Find important figures
+                    </button>
+                </div>
+            </div>
         </div>
-        <form class="border-t border-slate-800 p-4" hx-post="{{ url_for('document_chat', document_id=document.id) }}" hx-target="#chat-history" hx-swap="beforeend">
+        <form id="chat-form" class="border-t border-slate-800 p-4" hx-post="{{ url_for('document_chat', document_id=document.id) }}" hx-target="#chat-history" hx-swap="beforeend">
+            <input type="hidden" name="intent" value="chat">
             <label class="sr-only" for="prompt">Ask a question</label>
             <textarea id="prompt" name="prompt" rows="3" required placeholder="Ask about this document..."
                       class="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-indigo-500"></textarea>
-            <button class="mt-3 w-full rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400" type="submit">Ask assistant</button>
+            <div class="mt-3 flex items-center justify-between gap-3">
+                <span id="chat-status" class="text-xs text-slate-500" aria-live="polite">Ctrl+Enter to send</span>
+                <button id="chat-submit" class="rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60" type="submit">
+                    <span class="chat-submit-label">Ask assistant</span>
+                    <span class="chat-submit-loading hidden">Generating…</span>
+                </button>
+            </div>
         </form>
     </aside>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+    const chatForm = document.getElementById("chat-form");
+    const chatHistory = document.getElementById("chat-history");
+    const chatPrompt = document.getElementById("prompt");
+    const chatIntent = chatForm.querySelector("[name='intent']");
+    const chatSubmit = document.getElementById("chat-submit");
+    const chatStatus = document.getElementById("chat-status");
+
+    function scrollChatToBottom() {
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function appendUserMessage(text) {
+        const bubble = document.createElement("div");
+        bubble.className = "ml-auto max-w-[90%] rounded-xl bg-indigo-500 p-4 text-sm leading-6 text-white";
+        bubble.textContent = text;
+        chatHistory.appendChild(bubble);
+    }
+
+    chatPrompt.addEventListener("keydown", (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+            event.preventDefault();
+            chatForm.requestSubmit();
+        }
+    });
+
+    document.querySelectorAll("[data-prompt]").forEach((button) => {
+        button.addEventListener("click", () => {
+            chatPrompt.value = button.dataset.prompt;
+            chatIntent.value = button.dataset.intent || "chat";
+            chatForm.requestSubmit();
+        });
+    });
+
+    chatForm.addEventListener("htmx:beforeRequest", () => {
+        const text = chatPrompt.value.trim();
+        if (!text) return;
+        appendUserMessage(text);
+        chatPrompt.value = "";
+        chatSubmit.disabled = true;
+        chatSubmit.querySelector(".chat-submit-label").classList.add("hidden");
+        chatSubmit.querySelector(".chat-submit-loading").classList.remove("hidden");
+        chatStatus.textContent = "The assistant is thinking…";
+        scrollChatToBottom();
+    });
+
+    document.body.addEventListener("htmx:afterSwap", (event) => {
+        if (event.detail.target !== chatHistory) return;
+        finishChatRequest();
+    });
+
+    document.body.addEventListener("htmx:afterRequest", (event) => {
+        if (event.detail.elt !== chatForm || event.detail.successful) return;
+        finishChatRequest();
+        chatStatus.textContent = "The request failed. Try again.";
+    });
+
+    function finishChatRequest() {
+        chatSubmit.disabled = false;
+        chatSubmit.querySelector(".chat-submit-label").classList.remove("hidden");
+        chatSubmit.querySelector(".chat-submit-loading").classList.add("hidden");
+        chatStatus.textContent = "Ctrl+Enter to send";
+        chatIntent.value = "chat";
+        scrollChatToBottom();
+        chatPrompt.focus();
+    }
+</script>
 {% endblock %}
