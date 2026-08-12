@@ -136,7 +136,6 @@ addopts = """
 --cov-report xml:tests/reports/coverage.xml \
 --ignore=docs/
 """
-# TODO(MVP-16): Enforce 100% coverage in CI with `--cov-fail-under=100` once baseline tests are added.
 testpaths = ["tests"]
 
 [tool.coverage.report]

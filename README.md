@@ -10,13 +10,12 @@ Upload documents, get intelligent summaries, and chat with your files using natu
 - **AI Summarization** — Generate summaries and extract key points using Pydantic AI
 - **Semantic Search** — Find relevant content across documents using vector embeddings
 - **Conversational Q&A** — Ask questions about your documents with RAG-powered responses
-- **Streaming Responses** — Real-time LLM output via Server-Sent Events
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| **Backend** | FastAPI, Python 3.12+ |
+| **Backend** | FastAPI, Python 3.14+ |
 | **Frontend** | HTMX, Tailwind CSS CDN |
 | **AI/LLM** | Pydantic AI with OpenAI |
 | **Embeddings** | OpenAI `text-embedding-3-small` |
@@ -28,17 +27,17 @@ Upload documents, get intelligent summaries, and chat with your files using natu
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.14+
 - [UV](https://docs.astral.sh/uv/) package manager
-- OpenAI or Anthropic API key
+- OpenAI API key
 
 ### Installation
 
 ```bash
-git clone https://github.com/yourusername/ai-document-analyzer.git
+git clone https://github.com/krytos/ai-document-analyzer.git
 cd ai-document-analyzer
 
-uv sync
+uv sync --locked --all-groups
 
 cp .env.example .env
 
@@ -53,6 +52,7 @@ uv run ai-document-analyzer chat
 
 The CLI reads and indexes the retained sample PDF, then accepts questions until
 `exit` or `quit` is entered. Use `summary` as a shortcut for a document summary.
+Chat responses are returned after generation; token streaming is not currently enabled.
 
 Open [http://localhost:8000](http://localhost:8000) in your browser.
 
@@ -107,7 +107,6 @@ OCR runtime is required.
 ```
 src/document_analyzer/
 ├── main.py
-├── config.py
 ├── api/routes/
 ├── core/
 ├── services/
@@ -128,12 +127,15 @@ Query → Embed Question → Semantic Search → LLM + Context → Response
 ```bash
 uv run pytest
 
-uv run ty
+uv run ty check
 
-uv run ruff check src/
+uv run ruff check src tests
 
-uv run ruff format src/
+uv run ruff format --check src tests
 ```
+
+CI runs Ruff linting and formatting checks, Ty, pytest with coverage reporting,
+and a Docker runtime image build for pull requests and pushes to `main`.
 
 ## Business Value
 
